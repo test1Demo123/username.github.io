@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selected Applicants</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .applicant-list {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .applicant-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .applicant-item:last-child {
+            border-bottom: none;
+        }
+        .applicant-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-right: 15px;
+            object-fit: cover;
+        }
+        .applicant-name {
+            font-size: 1.2em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>List of Accepted Applicants</h1>
+    <div class="applicant-list" id="applicant-list">
+        <!-- List items will be added here dynamically -->
+    </div>
+
+    <script>
+        const REPO_OWNER = "your_username"; // Replace with your GitHub username
+        const REPO_NAME = "your_repo_name"; // Replace with your repository name
+        const BRANCH = "main"; // Replace with your branch name
+        const FOLDER_PATH = ""; // If the images are in a subfolder, specify the path (e.g., "images/")
+
+        // Reference to the applicant list container
+        const applicantList = document.getElementById("applicant-list");
+
+        // Function to fetch applicants dynamically
+        async function fetchApplicants() {
+            const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_PATH}?ref=${BRANCH}`;
+
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error("Failed to fetch repository contents.");
+                }
+
+                const files = await response.json();
+
+                // Clear current list
+                applicantList.innerHTML = "";
+
+                // Filter for valid image files and parse them
+                files.forEach(file => {
+                    if (file.type === "file" && /\.(png|jpg|jpeg|gif)$/i.test(file.name)) {
+                        const applicantItem = document.createElement("div");
+                        applicantItem.classList.add("applicant-item");
+
+                        const applicantImage = document.createElement("img");
+                        applicantImage.classList.add("applicant-image");
+                        applicantImage.src = file.download_url;
+                        applicantImage.alt = file.name;
+
+                        const applicantName = document.createElement("div");
+                        applicantName.classList.add("applicant-name");
+                        applicantName.textContent = file.name.replace(/\.\w+$/, ""); // Strip file extension
+
+                        applicantItem.appendChild(applicantImage);
+                        applicantItem.appendChild(applicantName);
+                        applicantList.appendChild(applicantItem);
+                    }
+                });
+            } catch (error) {
+                console.error("Error fetching applicants:", error);
+                applicantList.innerHTML = "<p>Failed to load applicants. Please try again later.</p>";
+            }
+        }
+
+        // Initial fetch and periodic updates
+        fetchApplicants();
+        setInterval(fetchApplicants, 30000); // Refresh every 30 seconds
+    </script>
+</body>
+</html>
